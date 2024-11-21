@@ -1,0 +1,19 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore virtual environment
+.venv/
+
+# Ignore JetBrains IDE folders (like PyCharm, IntelliJ, etc.)
+.idea/
+
+# Ignore build and dist directories
+build/
+dist/
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
