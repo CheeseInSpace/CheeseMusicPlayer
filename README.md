@@ -5,7 +5,7 @@ A simple Music player made by Cheese!
 
 - **Audio Formats**: Supports MP3, WAV, FLAC, and OGG.
 - **Folder Import**: Add multiple folders with music.
-- **Search and Filter**: Quickly find songs in your collection using powerful search tools.
+- **Searching**: Find songs using a Search bar.
 
 
 ## Development (Windows)
