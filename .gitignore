@@ -12,8 +12,3 @@ __pycache__/
 build/
 dist/
 
-# Ignore macOS system files
-.DS_Store
-
-# Ignore Windows system files
-Thumbs.db
