@@ -15,7 +15,8 @@ Ensure you have Python installed. You'll also need the required libraries, which
 ```bash
 pip install -r requirements.txt
 ```
-### Compiling
+And now you can run the Main.py file!
+### Compiling to an .exe
 To compile the application into a standalone executable:
 1. Navigate to the `Src` folder.
 2. Run the following command:
