@@ -204,9 +204,22 @@ class UIManager:
         self.update_duration_label()
 
     def update_duration_label(self):
-        total_duration = sum(self.audio_manager.get_duration(file) for file in self.audio_manager.playlist)
-        hours, minutes = divmod(total_duration // 60, 60)
-        self.duration_label.configure(text=f"{len(self.audio_manager.playlist)} Tracks - {hours} hr {minutes} min")
+        # Calculate the total duration in seconds and round it to avoid decimals
+        total_duration = sum(round(self.audio_manager.get_duration(file)) for file in self.audio_manager.playlist)
+
+        # Convert total duration into hours and minutes
+        hours, remainder = divmod(total_duration, 3600)  # 1 hour = 3600 seconds
+        minutes, seconds = divmod(remainder, 60)  # 1 minute = 60 seconds
+
+        # Format the label to show "X Tracks - Y hr Z min"
+        duration_text = f"{len(self.audio_manager.playlist)} Tracks - "
+
+        if hours > 0:
+            duration_text += f"{hours} hr "
+        if minutes > 0 or hours > 0:  # To ensure minutes are shown if there are hours
+            duration_text += f"{minutes} min"
+
+        self.duration_label.configure(text=duration_text)
 
     def filter_playlist(self, event=None):
         query = self.search_var.get().lower()
