@@ -260,13 +260,13 @@ class UIManager:
                 resized = cover.resize((120, 120))
                 self.cover_image_label.configure(image=ImageTk.PhotoImage(resized))
 
-
     def check_audio_end(self):
         try:
             if pygame.mixer.get_init() and not pygame.mixer.music.get_busy() and getattr(self.audio_manager,
                                                                                          'is_playing', False):
                 print("Track ended. Moving to the next track.")
                 self.audio_manager.next_audio()
+                self.update_now_playing()
         except pygame.error as e:
             print(f"Mixer error during playback check: {e}")
         self.root.after(100, self.check_audio_end)
