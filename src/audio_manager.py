@@ -1,6 +1,10 @@
 import os
 import pygame
 from mutagen import File
+from mutagen.mp3 import MP3
+from mutagen.flac import FLAC
+from PIL import Image
+from io import BytesIO
 
 class AudioManager:
     def __init__(self):
@@ -16,19 +20,6 @@ class AudioManager:
         self.playlist = []
         self.current_index = -1
 
-
-
-    def get_duration(self, file_path):
-        try:
-            audio = File(file_path)
-            if audio and hasattr(audio.info, 'length'):
-                return audio.info.length  # Duration in seconds
-            else:
-                print(f"Warning: No length found for {file_path}")
-        except Exception as e:
-            print(f"Error getting duration for {file_path}: {e}")
-        return 0  # Default duration if metadata is unavailable
-
     def load_playlist(self, folder_path, append=False):
         """Load all supported audio files from a folder into the playlist."""
         supported_formats = (".mp3", ".wav", ".ogg", ".flac")  # Add supported formats here
@@ -39,53 +30,87 @@ class AudioManager:
         ]
 
         if append:
-            self.playlist.extend(new_tracks)  # Add new tracks to the existing playlist
+            self.playlist.extend(new_tracks)  # Append new tracks to the existing playlist
         else:
             self.playlist = new_tracks  # Replace the playlist
 
+        print(f"{'Appended' if append else 'Loaded'} {len(new_tracks)} tracks into the playlist.")
+
+    def extract_metadata(self, file_path):
+        try:
+            audio = File(file_path, easy=True)
+            title = audio.get("title", ["Unknown Title"])[0]
+            artist = audio.get("artist", ["Unknown Artist"])[0]
+            album = audio.get("album", ["Unknown Album"])[0]
+            return title, artist, album
+        except Exception:
+            return "Unknown Title", "Unknown Artist", "Unknown Album"
+
+    def get_cover_image(self, file_path):
+        try:
+            audio = File(file_path)
+            if isinstance(audio, MP3) and "APIC:" in audio.tags:
+                artwork = audio.tags["APIC:"].data
+            elif isinstance(audio, FLAC) and audio.pictures:
+                artwork = audio.pictures[0].data
+            else:
+                return None
+
+            image = Image.open(BytesIO(artwork))
+            return image
+        except Exception:
+            return None
+
+    def get_duration(self, file_path):
+        try:
+            audio = File(file_path)
+            return audio.info.length
+        except Exception:
+            return 0
+
     def play_audio(self, index):
-        """Play the audio at the specified index in the playlist."""
-        if not (0 <= index < len(self.playlist)):
+        if not self.playlist:
+            print("Error: Playlist is empty. Load files before playing.")
             return
-        self.current_index = index
-        self.current_file = self.playlist[index]
-        pygame.mixer.music.load(self.current_file)
-        pygame.mixer.music.play(loops=-1 if self.looping else 0)
-        pygame.mixer.music.set_endevent(pygame.USEREVENT)
-        self.is_playing = True
+        if not (0 <= index < len(self.playlist)):
+            print(f"Error: Index {index} out of range.")
+            return
+        file_path = self.playlist[index]
+        if not os.path.exists(file_path):
+            print(f"Error: File not found - {file_path}")
+            return
+
+        try:
+            pygame.mixer.music.load(file_path)
+            pygame.mixer.music.play(loops=-1 if self.looping else 0)
+            self.is_playing = True  # Set is_playing to True when playback starts
+            self.current_file = file_path
+            self.current_index = index
+            print(f"Playing: {file_path}")
+        except pygame.error as e:
+            print(f"Error playing audio: {e}")
 
     def pause_resume_audio(self):
-        """Pause or resume the current audio playback."""
         if self.is_playing:
             pygame.mixer.music.pause()
+            print("Playback paused.")
         else:
             pygame.mixer.music.unpause()
+            print("Playback resumed.")
         self.is_playing = not self.is_playing
 
     def next_audio(self):
         """Play the next audio track in the playlist."""
+        if not self.playlist:
+            print("Playlist is empty.")
+            return
         next_index = (self.current_index + 1) % len(self.playlist)
         self.play_audio(next_index)
 
     def previous_audio(self):
         """Play the previous audio track in the playlist."""
+        if not self.playlist:
+            print("Playlist is empty.")
+            return
         prev_index = (self.current_index - 1) % len(self.playlist)
         self.play_audio(prev_index)
-
-    def toggle_loop(self):
-        """Toggle whether the audio should loop."""
-        self.looping = not self.looping
-
-    def extract_metadata(self, file_path):
-        """Extract the metadata (song name, artist, album) from the audio file."""
-        audio = File(file_path)
-        song_name = os.path.basename(file_path)  # Default to filename
-        artist = "Unknown Artist"
-        album = "Unknown Album"
-
-        if audio:
-            song_name = audio.get("title", [song_name])[0]
-            artist = audio.get("artist", [artist])[0]
-            album = audio.get("album", [album])[0]
-
-        return song_name, artist, album
